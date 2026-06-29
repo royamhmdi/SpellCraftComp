@@ -1,36 +1,29 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "symbol_table.h"
+#include <string.h>
+
+#include "../include/semantic.h"
+#include "../include/symbol_table.h"
 
 void yyerror(const char *s);
-int yylex(void);
+extern int yylex();
 %}
 
 %union {
-    char *str;
+    char* str;
     int ival;
     float fval;
 }
-
-%token MANA
-%token ELIXIR
-%token CAST_IF
-%token BEGIN_SPELL
-%token END_SPELL
 
 %token <str> ID
 %token <ival> INTEGER
 %token <fval> FLOAT
 
-%token PLUS
-%token MINUS
-%token MULTIPLY
-%token DIVIDE
+%token MANA ELIXIR CAST_IF CAST_ELSE BEGIN_SPELL END_SPELL
+%token PLUS MINUS MULTIPLY DIVIDE ASSIGN EQUAL END_STATEMENT
 
-%token ASSIGN
-%token EQUAL
-%token END_STATEMENT
+%type <ival> expression
 
 %left PLUS MINUS
 %left MULTIPLY DIVIDE
@@ -47,39 +40,52 @@ statements
     ;
 
 statement
-    : declaration
-    | assignment
-    | if_statement
+    : declaration END_STATEMENT
+    | assignment END_STATEMENT
+    | conditional
+    | block
     ;
 
 declaration
-    : MANA ID END_STATEMENT
+    : MANA ID
       {
-          if (!insert_symbol($2, TYPE_MANA))
-          {
-              printf("Semantic Error: Duplicate declaration of %s\n", $2);
-          }
+          check_duplicate_declaration($2, TYPE_MANA);
+          
       }
-    | ELIXIR ID END_STATEMENT
+    | ELIXIR ID
       {
-          if (!insert_symbol($2, TYPE_ELIXIR))
-          {
-              printf("Semantic Error: Duplicate declaration of %s\n", $2);
-          }
-      }
+          check_duplicate_declaration($2, TYPE_ELIXIR);
+                }
     ;
+
 
 assignment
-    : ID ASSIGN expression END_STATEMENT
-    ;
-
-if_statement
-    : CAST_IF condition BEGIN_SPELL block END_SPELL
+    : ID ASSIGN expression
+      {
+          Symbol* sym = lookup_symbol($1);
+          if (sym == NULL) {
+              printf("Error: Spell %s is undeclared!\n", $1);
+          } else {
+              check_assignment($1, $3);
+          }
+      }
     ;
 
 block
-    :
-    | statements
+    : BEGIN_SPELL
+      {
+          enter_scope();
+      }
+      statements
+      END_SPELL
+      {
+          exit_scope();
+      }
+    ;
+
+conditional
+    : CAST_IF '(' condition ')' block
+    | CAST_IF '(' condition ')' block CAST_ELSE block
     ;
 
 condition
@@ -88,12 +94,39 @@ condition
 
 expression
     : INTEGER
+      {
+          $$ = TYPE_MANA;
+      }
     | FLOAT
+      {
+          $$ = TYPE_ELIXIR;
+      }
     | ID
+      {
+          Symbol* sym = lookup_symbol($1);
+          if (sym) {
+              $$ = sym->type;
+          } else {
+              printf("Error: Spell %s is undeclared!\n", $1);
+              $$ = TYPE_MANA;
+          }
+      }
     | expression PLUS expression
+      {
+          $$ = promote_type($1, $3);
+      }
     | expression MINUS expression
+      {
+          $$ = promote_type($1, $3);
+      }
     | expression MULTIPLY expression
+      {
+          $$ = promote_type($1, $3);
+      }
     | expression DIVIDE expression
+      {
+          $$ = promote_type($1, $3);
+      }
     ;
 
 %%
@@ -101,9 +134,4 @@ expression
 void yyerror(const char *s)
 {
     printf("Syntax Error: %s\n", s);
-}
-
-int main()
-{
-    return yyparse();
 }

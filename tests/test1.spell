@@ -1,0 +1,11 @@
+mana $dragons~
+mana $dragons~
+elixir $poison_potion~
+
+$dragons => 5~
+$poison_potion => 3.5 + $dragons~
+
+cast_if ($dragons == 5)
+begin_spell
+$dragons => 12.5~
+end_spell

@@ -1,3 +1,16 @@
-src/lex.yy.c
-src/parser.tab.c
-src/parser.tab.h
+# Object files
+*.o
+
+# Executables
+spell
+spell.exe
+spellcraft.exe
+
+# Flex / Bison generated
+lex.yy.c
+parser.tab.c
+parser.tab.h
+parser.output
+
+# System
+.DS_Store

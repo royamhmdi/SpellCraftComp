@@ -1,0 +1,5 @@
+begin_spell
+mana $x~
+end_spell
+
+$x => 5~
