@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "parser.tab.h"
+
 int line = 1;
 %}
-
 /* ===== Definitions ===== */
 
 DIGIT       [0-9]
@@ -15,12 +16,33 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 
 %%
 
-"mana"          { printf("KEYWORD: mana\n"); }
-"elixir"        { printf("KEYWORD: elixir\n"); }
-"cast_if"       { printf("KEYWORD: cast_if\n"); }
-"begin_spell"   { printf("KEYWORD: begin_spell\n"); }
-"end_spell"     { printf("KEYWORD: end_spell\n"); }
+"mana"          { return MANA; }
+"elixir"        { return ELIXIR; }
+"cast_if"       { return CAST_IF; }
+"begin_spell"   { return BEGIN_SPELL; }
+"end_spell"     { return END_SPELL; }
 
+{FLOAT}         { return FLOAT; }
+{INTEGER}       { return INTEGER; }
+{ID}            { return ID; }
+
+"+"             { return PLUS; }
+"-"             { return MINUS; }
+"*"             { return MULTIPLY; }
+"/"             { return DIVIDE; }
+
+">="            { return ASSIGN; }
+"=="            { return EQUAL; }
+
+"~"             { return END_STATEMENT; }
+
+[ \t\r]+        ;
+
+\n              { line++; }
+
+.               {
+    printf("Unknown character '%s' at line %d\n", yytext, line);
+}
 %%
 
 int yywrap()
