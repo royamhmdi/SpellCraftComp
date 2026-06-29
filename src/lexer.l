@@ -4,6 +4,11 @@
 
 #include "parser.tab.h"
 
+#include <string.h>
+
+extern YYSTYPE yylval;
+
+
 int line = 1;
 %}
 /* ===== Definitions ===== */
@@ -22,9 +27,20 @@ FLOAT       {DIGIT}+"."{DIGIT}+
 "begin_spell"   { return BEGIN_SPELL; }
 "end_spell"     { return END_SPELL; }
 
-{FLOAT}         { return FLOAT; }
-{INTEGER}       { return INTEGER; }
-{ID}            { return ID; }
+{INTEGER} {
+    yylval.ival = atoi(yytext);
+    return INTEGER;
+}
+
+{FLOAT} {
+    yylval.fval = atof(yytext);
+    return FLOAT;
+}
+
+{ID} {
+    yylval.str = strdup(yytext);
+    return ID;
+}
 
 "+"             { return PLUS; }
 "-"             { return MINUS; }

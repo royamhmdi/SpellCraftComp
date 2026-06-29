@@ -1,10 +1,17 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "symbol_table.h"
 
 void yyerror(const char *s);
 int yylex(void);
 %}
+
+%union {
+    char *str;
+    int ival;
+    float fval;
+}
 
 %token MANA
 %token ELIXIR
@@ -12,9 +19,9 @@ int yylex(void);
 %token BEGIN_SPELL
 %token END_SPELL
 
-%token ID
-%token INTEGER
-%token FLOAT
+%token <str> ID
+%token <ival> INTEGER
+%token <fval> FLOAT
 
 %token PLUS
 %token MINUS
@@ -47,7 +54,19 @@ statement
 
 declaration
     : MANA ID END_STATEMENT
+      {
+          if (!insert_symbol($2, TYPE_MANA))
+          {
+              printf("Semantic Error: Duplicate declaration of %s\n", $2);
+          }
+      }
     | ELIXIR ID END_STATEMENT
+      {
+          if (!insert_symbol($2, TYPE_ELIXIR))
+          {
+              printf("Semantic Error: Duplicate declaration of %s\n", $2);
+          }
+      }
     ;
 
 assignment
